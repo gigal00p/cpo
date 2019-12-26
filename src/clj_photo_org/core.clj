@@ -131,9 +131,10 @@
 ; (def wszystkie-male (into [] (pmap #(make-photo-map %) (files-to-process input-dir))))
 ; (def wszystkie-duze (into [] (pmap #(make-photo-map %) (files-to-process big-input-dir))))
 
+
 (defn process-files
   [coll]
-  (map #(process-one-element % target-directory) coll))
-    
-
-
+  (let [number-processed-files (->> (map #(process-one-element % target-directory) coll)
+                                   (into [])
+                                   count)]
+    (info "Copied" number-processed-files "files")))
