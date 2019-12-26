@@ -120,9 +120,12 @@
 
 
 (defn process-one-element
-  [element target-directory]
+  [element target-root-directory]
   (let [source-path (:file-path element)
-        dest-path (str target-directory (:target-name element))
+        dest-year (str (:year element))
+        dest-month-number (:month-as-string element)
+        dest-month-name (:month-name element)
+        dest-path (str target-root-directory dest-year "/" dest-month-number "-" dest-month-name "/" (:target-name element))
         prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
     ;(info "Processing file" dest-path)
     (copy-file source-path dest-path)))
