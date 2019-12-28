@@ -9,10 +9,12 @@ named IMG_4613.JPG. This small program will rename them based on their exif info
 md5 checksum of.
 
 After rename operation it will organize them into folder structure similar to:
-`.
+
+```.
 └── 2018
     └── 03-MARCH
-        └── 2018-03-22T12-30-22-1b7a4cb.jpg`
+    └── 2018-03-22T12-30-22-1b7a4cb.jpg
+```
 
 ## Installation
 
