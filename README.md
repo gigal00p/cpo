@@ -13,13 +13,12 @@ Download from https://github.com/gigal00p/cpo
 
 ## Options
 
--i input path
-
--o output_path
+* `-i input path`
+* `-o output_path`
 
 ## Examples
 
-java -jar clj-photo-org-0.1.0-SNAPSHOT-standalone.jar -i /home/username/pictures/sample -o /home/username/temp/results/
+`java -jar clj-photo-org-0.1.0-SNAPSHOT-standalone.jar -i /home/username/pictures/sample -o /home/username/temp/results/`
 
 
 ### Bugs
