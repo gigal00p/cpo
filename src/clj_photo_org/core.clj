@@ -6,24 +6,15 @@
             [clj-exif.core :as exif]
             [clojure.java.io :as io]
             [java-time :as time]
+            [clojure.tools.cli :refer [parse-opts]]
             ))
 
 (refer-clojure :exclude [range iterate format max min])
 
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
-
-
-(def photo "/home/krzysztof/Obrazy/sample/IMG_4813.JPG")
-
-
-(def input-dir "/home/krzysztof/Obrazy/sample")
-
-
-(def big-input-dir "/home/krzysztof/Obrazy/100CANON")
+;(def photo "/home/krzysztof/Obrazy/sample/IMG_4813.JPG")
+;(def input-dir "/home/krzysztof/Obrazy/sample")
+;(def big-input-dir "/home/krzysztof/Obrazy/100CANON")
 
 
 (defn exit [status msg]
@@ -37,13 +28,13 @@
   [path & {:keys [recursively]}]
   (let [file (io/file path)
         coll (if (.isDirectory file)
-                (do
-                  (if (= true recursively)
-                    (file-seq file)
-                    (->> file
-                         .listFiles)))
-                (do (error (str "Passed path: `" path "` is not a directory"))
-                    (exit -1 "Cannot proceed")))] ; exit if passed dir string does not exist
+               (do
+                 (if (= true recursively)
+                   (file-seq file)
+                   (->> file
+                        .listFiles)))
+               (do (error (str "Passed path: `" path "` is not a directory"))
+                   (exit -1 "Cannot proceed")))] ; exit if passed dir string does not exist
     (if (empty? coll)
       [] ; retrn empty vector if directory does not contain any elements, otherwise return results
       (remove #(.isDirectory %) coll))))
@@ -64,11 +55,11 @@
           (exit -1 "Program will terminate")) ; exit if nothing to do
       valid-files-to-process)))
 
-         
+
 
 
 (defn get-photo-date-taken
-                                        ; TODO error handling
+  "TODO error handling"
   [photo-file-path]
   (let [input-file (java.io.File. photo-file-path)
         metadata (exif/get-metadata input-file)
@@ -87,15 +78,18 @@
   [myObject]
   (vec (.getMethods (.getClass myObject))))
 
+
 (defn stringify-single-digit
   [month-number]
   (if (< month-number 10)
     (str "0" month-number)
     (str month-number)))
 
+
 (defn replace-colon-with-dash
   [date-time-string]
   (str/replace date-time-string #":" "-"))
+
 
 (defn check-date-format
   [string]
@@ -116,7 +110,6 @@
         date-time-as-string (check-date-format (replace-colon-with-dash (.toString date-object)))
         md5-sum (subs (digest/md5 (io/as-file photo)) 0 7)
         target-name (str date-time-as-string "-" md5-sum ".jpg")]
-                                        ; (info "Processing file" photo "- new filename:" target-name)
     {:day-of-month day-of-month
      :weekday weekday
      :month month
@@ -154,8 +147,46 @@
 
 
 (defn process-files
-  [coll]
+  [coll target-directory]
   (let [number-processed-files (->> (map #(process-one-element % target-directory) coll)
                                     (into [])
-                                    count)]
-    (info "Copied" number-processed-files "files")))
+                                    count)
+        msg (info "Copied" number-processed-files "files")]
+    
+    (exit 1 msg)))
+
+
+(def cli-options
+  [["-i" "--input DIR" "Directory with profiles csv files produced by xsv tool"]
+   ["-o" "--output DIR" "Directory where DDL sql files will be written"]
+   ["-h" "--help"]])
+
+
+(defn help [options]
+  (->> ["profile2ddl is a command line tool for converting output of `xsv stats` into sql ddl files."
+        ""
+        "Usage: java -jar profile2ddl-0.1.0-SNAPSHOT-standalone.jar [options]"
+        ""
+        "Options:"
+        options
+        ""]
+       (str/join \newline)))
+
+
+(defn -main [& args]
+  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+    (cond
+      (:help options) (exit 0 (help summary))
+      (not= (count options) 2) (exit 0 (str "Not enough options provided, usage:\n\n" (help summary)))
+      (not= (count errors) 0) (exit 0 (str "CLI arguments parsing failed, usage:\n\n" (help summary)))
+      :else
+      (try
+        (let [input-dir (->> options :input)
+              output-dir (->> options :output)
+              wszystkie-male (into [] (pmap #(make-photo-map %) (files-to-process input-dir)))]
+
+          (process-files wszystkie-male output-dir))
+
+        (catch Exception e
+          (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))
+          (System/exit 1))))))
