@@ -21,12 +21,14 @@ desired dir structure.
 
 ## Installation
 
-[Leiningen](https://leiningen.org/) tool must be installed before using this tool.
+Download latest fat jar from this repo releases or compile it using leiningen:
 
-1. `git clone https://github.com/gigal00p/cpo`
-2. cd `cpo`
-3. run `lein uberjar`
-4. Under target/uberjar you'll find standalone jar to run
+
+1. Install [Leiningen](https://leiningen.org/)
+2. `git clone https://github.com/gigal00p/cpo`
+3. cd `cpo`
+4. run `lein uberjar`
+5. Under target/uberjar you'll find standalone jar to run
 
 ## Usage
 
