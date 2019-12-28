@@ -16,6 +16,9 @@ After rename operation it will organize them into folder structure similar to:
     └── 2018-03-22T12-30-22-1b7a4cb.jpg
 ```
 
+Original files are preserved. No changes are made to output files other than rename and `mv` into
+desired dir structure.
+
 ## Installation
 
 [Leiningen](https://leiningen.org/) tool must be installed before using this tool.
