@@ -144,6 +144,21 @@
     (exit 1 msg)))
 
 
+(defn delete-directory-recursive
+  "Recursively delete a directory."
+  [^java.io.File file]
+  ;; when `file` is a directory, list its entries and call this
+  ;; function with each entry. can't `recur` here as it's not a tail
+  ;; position, sadly. could cause a stack overflow for many entries?
+  (when (.isDirectory file)
+    (doseq [file-in-dir (.listFiles file)]
+      (delete-directory-recursive file-in-dir)))
+  ;; delete the file or directory. if it it's a file, it's easily
+  ;; deletable. if it's a directory, we already have deleted all its
+  ;; contents with the code above (remember?)
+  (io/delete-file file))
+
+
 (def cli-options
   [["-i" "--input DIR" "Directory with profiles csv files produced by xsv tool"]
    ["-o" "--output DIR" "Directory where DDL sql files will be written"]
@@ -171,9 +186,9 @@
       (try
         (let [input-dir (->> options :input)
               output-dir (->> options :output)
-              wszystkie-male (into [] (pmap #(make-photo-map %) (files-to-process input-dir)))]
+              parsed-photos (into [] (pmap #(make-photo-map %) (files-to-process input-dir)))]
 
-          (process-files wszystkie-male output-dir))
+          (process-files parsed-photos output-dir))
 
         (catch Exception e
           (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))
