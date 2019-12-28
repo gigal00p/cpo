@@ -61,7 +61,7 @@
                                      flatten)]
     (if (empty? valid-files-to-process)
       (do (error (str "No files to process in the directory" dir))
-          (exit -1 "Program will terminate")) ; exit if passed dir string does not exist
+          (exit -1 "Program will terminate")) ; exit if nothing to do
       valid-files-to-process)))
 
          
