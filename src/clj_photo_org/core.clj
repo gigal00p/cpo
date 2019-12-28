@@ -5,7 +5,7 @@
             [digest]
             [clj-exif.core :as exif]
             [clojure.java.io :as io]
-            [java-time]
+            [java-time :as time]
             ))
 
 (refer-clojure :exclude [range iterate format max min])
@@ -32,29 +32,39 @@
 
 
 (defn get-full-path-files-in-dir
-  "Returns absolute path of files in the passed directory.
-   :recursively? keyword controles weather walk will be done recursively"
+  "Returns LazySeq of java.io.File objects of the passed directory.
+   `:recursively true/false` keyword controls if fs walk will be done recursively"
   [path & {:keys [recursively]}]
-  (let [file (io/file path)]
-    (if (.isDirectory file)
-      (do
-        (if (= true recursively)
-          (file-seq file)
-          (->> file
-               .listFiles)))
-      (do (error (str "Passed path: `" path "` is not a directory"))
-                                        ; (exit -1 "Cannot proceed")
-          ))))
+  (let [file (io/file path)
+        coll (if (.isDirectory file)
+                (do
+                  (if (= true recursively)
+                    (file-seq file)
+                    (->> file
+                         .listFiles)))
+                (do (error (str "Passed path: `" path "` is not a directory"))
+                    (exit -1 "Cannot proceed")))] ; exit if passed dir string does not exist
+    (if (empty? coll)
+      [] ; retrn empty vector if directory does not contain any elements, otherwise return results
+      (remove #(.isDirectory %) coll))))
 
 
 (defn files-to-process
-  "Filter files to process"
+  "Check if there are any files to process"
   [dir]
-  (let [coll (->> (get-full-path-files-in-dir dir)
-                  (map #(.getAbsolutePath %)))
-        filters [#(.endsWith % ".JPG") #(.endsWith % ".jpg")]]
-    (->> (map #(filter % coll) filters) ; accept only JPG and jpg extensions
-         flatten)))
+  (let [all-files (get-full-path-files-in-dir dir :recursively true)
+        filters [#(.endsWith % ".JPG") #(.endsWith % ".jpg")]
+        potential-files-to-process (if (empty? all-files)
+                                     ()
+                                     (->> (map #(.getAbsolutePath %) all-files)))
+        valid-files-to-process  (->> (map #(filter % potential-files-to-process) filters) ; accept only JPG and jpg extensions
+                                     flatten)]
+    (if (empty? valid-files-to-process)
+      (do (error (str "No files to process in the directory" dir))
+          (exit -1 "Program will terminate")) ; exit if passed dir string does not exist
+      valid-files-to-process)))
+
+         
 
 
 (defn get-photo-date-taken
@@ -70,7 +80,7 @@
 
 (defn make-date-object
   [string-date]
-  (local-date-time "yyyy:MM:dd HH:mm:ss" string-date))
+  (time/local-date-time "yyyy:MM:dd HH:mm:ss" string-date))
 
 
 (defn get-object-methods
@@ -135,7 +145,7 @@
         dest-month-name (:month-name element)
         dest-path (str target-root-directory dest-year "/" dest-month-number "-" dest-month-name "/" (:target-name element))
         prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
-    (info "Processing file" dest-path)
+    (info "Copying file" source-path "to" dest-path)
     (copy-file source-path dest-path)))
 
 
