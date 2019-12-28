@@ -1,11 +1,27 @@
 # clj-photo-org
 
-Simple CLI tool that renames JPG photos and organizes them into YYYY/MM-MONTH-NAME
-directory structure
+`cpo` is simple CLI tool that renames JPG photos and organizes them into `YYYY/MM-MONTH-NAME`
+directory structure.
+
+Suppose you have a bunch of JPG files nested under some directory. These might be from
+different cameras and therefore there might be name collision (e.g. two different files
+named IMG_4613.JPG. This small program will rename them based on their exif info and append
+md5 checksum of.
+
+After rename operation it will organize them into folder structure similar to:
+`.
+└── 2018
+    └── 03-MARCH
+        └── 2018-03-22T12-30-22-1b7a4cb.jpg`
 
 ## Installation
 
-Download from https://github.com/gigal00p/cpo
+[Leiningen](https://leiningen.org/) tool must be installed before using this tool.
+
+1. `git clone https://github.com/gigal00p/cpo`
+2. cd `cpo`
+3. run `lein uberjar`
+4. Under target/uberjar you'll find standalone jar to run
 
 ## Usage
 
@@ -27,7 +43,7 @@ Via github.
 
 ## License
 
-Copyright © 2019 FIXME
+Copyright © 2019 gigal00p
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
