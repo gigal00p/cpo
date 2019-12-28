@@ -6,7 +6,7 @@ directory structure.
 Suppose you have a bunch of JPG files nested under some directory. These might be from
 different cameras and therefore there might be name collision (e.g. two different files
 named IMG_4613.JPG. This small program will rename them based on their exif info and append
-md5 checksum of.
+part of md5 checksum string to each file name.
 
 After rename operation it will organize them into folder structure similar to:
 
