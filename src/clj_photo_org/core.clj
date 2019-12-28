@@ -14,11 +14,6 @@
 (refer-clojure :exclude [range iterate format max min])
 
 
-;(def photo "/home/krzysztof/Obrazy/sample/IMG_4813.JPG")
-;(def input-dir "/home/krzysztof/Obrazy/sample")
-;(def big-input-dir "/home/krzysztof/Obrazy/100CANON")
-
-
 (defn exit [status msg]
   (println msg)
   (System/exit status))
@@ -122,9 +117,6 @@
      :target-name target-name})) 
 
 
-(def target-directory "/home/krzysztof/temp/results/")
-
-
 (defn copy-file
   [source-path dest-path]
   (io/copy (io/file source-path) (io/file dest-path)))
@@ -140,10 +132,6 @@
         prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
     (info "Copying file" source-path "to" dest-path)
     (copy-file source-path dest-path)))
-
-
-; (def wszystkie-male (into [] (pmap #(make-photo-map %) (files-to-process input-dir))))
-; (def wszystkie-duze (into [] (pmap #(make-photo-map %) (files-to-process big-input-dir))))
 
 
 (defn process-files
