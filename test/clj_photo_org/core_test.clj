@@ -63,3 +63,15 @@
                        :weekday "THURSDAY",
                        :target-name "2018-03-22T12-30-22-1b7a4cb.jpg"}]
     (is (= test-data sample-output))))
+
+
+(deftest process-one-element-test
+  (let [del-output-dir (delete-directory-recursive (io/as-file "resources/test_output/"))
+        create-output-dir (.mkdir (io/as-file "resources/test_output/"))
+        test-element (make-photo-map "resources/test_input/sample.JPG")
+        do-process (process-one-element test-element "resources/test_output/")
+        result-file (-> (files-to-process "resources/test_output/")
+                        first ; this is LazySeq so must "get it"
+                        (str/split #"/")
+                        last)]
+    (is (= result-file "2018-03-22T12-30-22-1b7a4cb.jpg"))))
