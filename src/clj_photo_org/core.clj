@@ -1,27 +1,35 @@
 (ns clj-photo-org.core
   (:gen-class)
   (:require [taoensso.timbre :as timbre :refer [debug  info  warn  error  fatal]]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [digest]
+            [clj-exif.core :as exif]
+            [clojure.java.io :as io]
+            [java-time]
+            ))
 
-(require 'digest)
-(require '[clj-exif.core :as exif])
-(require '[clojure.java.io :as io])
 (refer-clojure :exclude [range iterate format max min])
-(use 'java-time)
+
 
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
   (println "Hello, World!"))
 
+
 (def photo "/home/krzysztof/Obrazy/sample/IMG_4813.JPG")
 
+
 (def input-dir "/home/krzysztof/Obrazy/sample")
+
+
 (def big-input-dir "/home/krzysztof/Obrazy/100CANON")
+
 
 (defn exit [status msg]
   (println msg)
   (System/exit status))
+
 
 (defn get-full-path-files-in-dir
   "Returns absolute path of files in the passed directory.
@@ -35,7 +43,7 @@
           (->> file
                .listFiles)))
       (do (error (str "Passed path: `" path "` is not a directory"))
-          ; (exit -1 "Cannot proceed")
+                                        ; (exit -1 "Cannot proceed")
           ))))
 
 
@@ -45,12 +53,12 @@
   (let [coll (->> (get-full-path-files-in-dir dir)
                   (map #(.getAbsolutePath %)))
         filters [#(.endsWith % ".JPG") #(.endsWith % ".jpg")]]
-     (->> (map #(filter % coll) filters) ; accept only JPG and jpg extensions
-          flatten)))
+    (->> (map #(filter % coll) filters) ; accept only JPG and jpg extensions
+         flatten)))
 
 
 (defn get-photo-date-taken
-  ; TODO error handling
+                                        ; TODO error handling
   [photo-file-path]
   (let [input-file (java.io.File. photo-file-path)
         metadata (exif/get-metadata input-file)
@@ -84,7 +92,7 @@
   (if (= (count string) 16)
     (str string "-00")
     string))
-  
+
 
 (defn make-photo-map
   [photo]
@@ -98,7 +106,7 @@
         date-time-as-string (check-date-format (replace-colon-with-dash (.toString date-object)))
         md5-sum (subs (digest/md5 (io/as-file photo)) 0 7)
         target-name (str date-time-as-string "-" md5-sum ".jpg")]
-    ; (info "Processing file" photo "- new filename:" target-name)
+                                        ; (info "Processing file" photo "- new filename:" target-name)
     {:day-of-month day-of-month
      :weekday weekday
      :month month
@@ -127,7 +135,7 @@
         dest-month-name (:month-name element)
         dest-path (str target-root-directory dest-year "/" dest-month-number "-" dest-month-name "/" (:target-name element))
         prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
-    ;(info "Processing file" dest-path)
+    (info "Processing file" dest-path)
     (copy-file source-path dest-path)))
 
 
@@ -138,6 +146,6 @@
 (defn process-files
   [coll]
   (let [number-processed-files (->> (map #(process-one-element % target-directory) coll)
-                                   (into [])
-                                   count)]
+                                    (into [])
+                                    count)]
     (info "Copied" number-processed-files "files")))
