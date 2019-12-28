@@ -166,9 +166,9 @@
 
 
 (defn help [options]
-  (->> ["profile2ddl is a command line tool for converting output of `xsv stats` into sql ddl files."
+  (->> ["clj-photo-org is a command line tool for converting output of `xsv stats` into sql ddl files."
         ""
-        "Usage: java -jar profile2ddl-0.1.0-SNAPSHOT-standalone.jar [options]"
+        "Usage: java -jar clj-photo-org-0.1.0-standalone.jar [options]"
         ""
         "Options:"
         options
