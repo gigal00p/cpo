@@ -31,8 +31,8 @@ After rename operation it will organize them into folder structure similar to:
 
 ## Options
 
-* `-i input path`
-* `-o output_path`
+* `-i input path` - might contain nested directories with `JPG` files.
+* `-o output_path` - directory where organized structure will be created.
 
 ## Examples
 

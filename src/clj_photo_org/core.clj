@@ -160,8 +160,8 @@
 
 
 (def cli-options
-  [["-i" "--input DIR" "Directory with profiles csv files produced by xsv tool"]
-   ["-o" "--output DIR" "Directory where DDL sql files will be written"]
+  [["-i" "--input DIR" "Directory that contains JPG files (can be nested dir structure)"]
+   ["-o" "--output DIR" "Where renamed and organized JPG files will be written"]
    ["-h" "--help"]])
 
 
