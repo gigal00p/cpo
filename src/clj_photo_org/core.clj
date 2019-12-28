@@ -1,13 +1,15 @@
 (ns clj-photo-org.core
   (:gen-class)
-  (:require [taoensso.timbre :as timbre :refer [debug  info  warn  error  fatal]]
-            [clojure.string :as str]
-            [digest]
-            [clj-exif.core :as exif]
-            [clojure.java.io :as io]
-            [java-time :as time]
-            [clojure.tools.cli :refer [parse-opts]]
-            ))
+  (:require
+   [clj-exif.core :as exif]
+   [clojure.java.io :as io]
+   [clojure.spec.alpha :as s]
+   [clojure.string :as str]
+   [clojure.tools.cli :refer [parse-opts]]
+   [digest]
+   [eftest.runner :refer [find-tests run-tests]]
+   [java-time :as time]
+   [taoensso.timbre :as timbre :refer [debug  info  warn  error  fatal]]))
 
 (refer-clojure :exclude [range iterate format max min])
 
@@ -56,10 +58,8 @@
       valid-files-to-process)))
 
 
-
-
 (defn get-photo-date-taken
-  "TODO error handling"
+  "TODO docstring"
   [photo-file-path]
   (let [input-file (java.io.File. photo-file-path)
         metadata (exif/get-metadata input-file)
