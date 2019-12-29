@@ -93,6 +93,18 @@
     string))
 
 
+(defn calculate-md5-substring-of-file
+  "Calculate md5 sum of file. Return string of first 7 characters
+  of the checksum if the file exists, nil otherwise."
+  [file-path]
+  (let [file (io/as-file file-path)]
+    (if (.exists file)
+      (subs (digest/md5 file) 0 7)
+      (do
+        (warn "File" file-path "does not exists" )
+        nil))))
+
+
 (defn make-photo-map
   [photo]
   (let [date-object (make-date-object (get-photo-date-taken photo))
@@ -103,7 +115,7 @@
         month-name (.toString (.getMonth date-object))
         year (.getYear date-object)
         date-time-as-string (check-date-format (replace-colon-with-dash (.toString date-object)))
-        md5-sum (subs (digest/md5 (io/as-file photo)) 0 7)
+        md5-sum (calculate-md5-substring-of-file photo)
         target-name (str date-time-as-string "-" md5-sum ".jpg")]
     {:day-of-month day-of-month
      :weekday weekday
@@ -140,8 +152,8 @@
                                     (into [])
                                     count)
         msg (info "Copied" number-processed-files "files")]
-    
-    (exit 1 msg)))
+    ; (exit 1 msg)
+    ))
 
 
 (defn delete-directory-recursive
