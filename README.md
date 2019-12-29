@@ -43,6 +43,7 @@ Download latest fat jar from this repo releases or compile it using leiningen:
 
 `java -jar clj-photo-org-0.1.0-SNAPSHOT-standalone.jar -i /home/username/pictures/sample -o /home/username/temp/results/`
 
+REPL invocation: `(-main "-i" "c:/Users/username/Downloads/input" "-o" "c:/Users/username/Downloads/output/")`
 
 ### Bugs
 
