@@ -72,6 +72,6 @@
         do-process (process-one-element test-element "resources/test_output/")
         result-file (-> (files-to-process "resources/test_output/")
                         first ; this is LazySeq so must "get it"
-                        (str/split #"/")
-                        last)]
+                        (io/as-file)
+                        .getName)]
     (is (= result-file "2018-03-22T12-30-22-1b7a4cb.jpg"))))
