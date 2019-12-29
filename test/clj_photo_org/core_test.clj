@@ -12,19 +12,20 @@
 
 (deftest files-to-process-test
   (let [test-data (-> (files-to-process "resources/test_input/")
+                      :files-with-exif
                       first ; this is LazySeq so must "get it"
-                      (str/split #"/")
-                      last)] ; get file name
+                      (io/as-file)
+                      .getName)] ; get file name
    (= (is "sample.JPG" test-data))))
 
 
-(deftest get-photo-date-taken-test
-  (let [test-data (get-photo-date-taken "resources/test_input/sample.JPG")]
+(deftest read-exif-photo-date-taken-test
+  (let [test-data (read-exif-photo-date-taken "resources/test_input/sample.JPG")]
     (= (is "2018:03:22 12:30:22" test-data))))
 
 
 (deftest make-date-object-test
-  (let [test-data (get-photo-date-taken "resources/test_input/sample.JPG")
+  (let [test-data (read-exif-photo-date-taken "resources/test_input/sample.JPG")
         date-object (->> (make-date-object test-data)
                          class
                          str)]
@@ -73,6 +74,7 @@
         test-element (make-photo-map "resources/test_input/sample.JPG")
         do-process (process-one-element test-element "resources/test_output/")
         result-file-name (-> (files-to-process "resources/test_output/")
+                             :files-with-exif
                              first ; this is LazySeq so must "get it"
                              (io/as-file)
                              .getName)]

@@ -1,7 +1,6 @@
 (ns clj-photo-org.core
   (:gen-class)
   (:require
-   [clj-exif.core :as exif]
    [clojure.java.io :as io]
    [clojure.spec.alpha :as s]
    [clojure.string :as str]
@@ -9,6 +8,7 @@
    [digest]
    [eftest.runner :refer [find-tests run-tests]]
    [java-time :as time]
+   [exif-processor.core :as exf]
    [taoensso.timbre :as timbre :refer [debug  info  warn  error  fatal]]))
 
 (refer-clojure :exclude [range iterate format max min])
@@ -17,6 +17,21 @@
 (defn exit [status msg]
   (println msg)
   (System/exit status))
+
+
+(defn read-exif-photo-date-taken
+  "TODO docstring"
+  [photo-file-path]
+  (let [input-file (io/as-file photo-file-path)
+        all-metadata (exf/exif-for-file input-file)]
+    (get all-metadata "Date/Time")))
+
+
+(defn has-exif-data?
+  [file-path]
+  (if (string? (read-exif-photo-date-taken file-path))
+    true
+    false))
 
 
 (defn get-full-path-files-in-dir
@@ -45,23 +60,15 @@
         potential-files-to-process (if (empty? all-files)
                                      ()
                                      (->> (map #(.getAbsolutePath %) all-files)))
-        valid-files-to-process  (->> (map #(filter % potential-files-to-process) filters) ; accept only JPG and jpg extensions
+        valid-files-to-process  (->> (map #(filter % potential-files-to-process) filters)
                                      flatten)]
     (if (empty? valid-files-to-process)
       (do (error (str "No files to process in the directory" dir))
-          (exit -1 "Program will terminate")) ; exit if nothing to do
-      valid-files-to-process)))
-
-
-(defn get-photo-date-taken
-  "TODO docstring"
-  [photo-file-path]
-  (let [input-file (java.io.File. photo-file-path)
-        metadata (exif/get-metadata input-file)
-        photo-metadata (exif/read metadata)]
-    (-> photo-metadata
-        (get "Root")
-        (get "DateTime"))))
+          ; (exit -1 "Program will terminate")
+          ) ; exit if nothing to do
+      {:files-with-exif (get (group-by has-exif-data? valid-files-to-process) true)
+       :files-without-exif (get (group-by has-exif-data? valid-files-to-process) false)}
+      )))
 
 
 (defn make-date-object
@@ -107,7 +114,7 @@
 
 (defn make-photo-map
   [photo]
-  (let [date-object (make-date-object (get-photo-date-taken photo))
+  (let [date-object (make-date-object (read-exif-photo-date-taken photo))
         day-of-month (.getDayOfMonth date-object)
         weekday (.toString (.getDayOfWeek date-object))
         month (.getMonthValue date-object)
@@ -198,10 +205,20 @@
       (try
         (let [input-dir (->> options :input)
               output-dir (->> options :output)
-              parsed-photos (into [] (pmap #(make-photo-map %) (files-to-process input-dir)))]
+              parsed-photos-with-exif (into [] (pmap #(make-photo-map %)
+                                                     (->>
+                                                      (files-to-process input-dir)
+                                                      :files-with-exif)))
+              parsed-photos-without-exif (->>
+                                          (files-to-process input-dir)
+                                          :files-without-exif)]
 
-          (process-files parsed-photos output-dir))
+          (process-files parsed-photos-with-exif output-dir)
+
+          ;; TODO: handle :files-without-exif
+          (map #(error "This file does not contain exif data:" %) parsed-photos-without-exif))
 
         (catch Exception e
           (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))
-          (System/exit 1))))))
+                                        ; (System/exit 1)
+          )))))
