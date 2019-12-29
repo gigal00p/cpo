@@ -64,11 +64,9 @@
                                      flatten)]
     (if (empty? valid-files-to-process)
       (do (error (str "No files to process in the directory" dir))
-          ; (exit -1 "Program will terminate")
-          ) ; exit if nothing to do
+           (exit -1 "Program will terminate")) ; exit if nothing to do
       {:files-with-exif (get (group-by has-exif-data? valid-files-to-process) true)
-       :files-without-exif (get (group-by has-exif-data? valid-files-to-process) false)}
-      )))
+       :files-without-exif (get (group-by has-exif-data? valid-files-to-process) false)})))
 
 
 (defn make-date-object
@@ -159,8 +157,7 @@
                                     (into [])
                                     count)
         msg (info "Copied" number-processed-files "files")]
-    ; (exit 1 msg)
-    ))
+    (exit 1 msg)))
 
 
 (defn delete-directory-recursive
@@ -220,5 +217,4 @@
 
         (catch Exception e
           (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))
-                                        ; (System/exit 1)
-          )))))
+          (System/exit 1))))))
