@@ -150,7 +150,7 @@
         dest-year (str (:year element))
         dest-month-number (:month-as-string element)
         dest-month-name (:month-name element)
-        dest-path (str target-root-directory dest-year "/" dest-month-number "-" dest-month-name "/" (:target-name element))
+        dest-path (str target-root-directory "/" dest-year "/" dest-month-number "-" dest-month-name "/" (:target-name element))
         prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
     (info "Copying file" source-path "to" dest-path)
     (copy-file source-path dest-path)))
@@ -242,7 +242,7 @@
             (if-let [number-bad (> (count parsed-photos-without-exif) 0)] (do 
                                                                             (map #(process-single-bad-file output-dir %) parsed-photos-without-exif)
                                                                             (info (count parsed-photos-without-exif) "files cannot be processed because they does not contain EXIF metadata. See `NO_EXIF_DATA_FILES` folder in the" output-dir "directory"))
-                                                                            "No bad files found")))
+                    "No bad files found")))
         (catch Exception e
           (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))))
                                         ; (System/exit 1)
