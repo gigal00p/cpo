@@ -161,7 +161,7 @@
   (let [number-processed-files (->> (map #(process-one-element % target-directory) coll)
                                     (into [])
                                     count)
-        msg (info "Copied" number-processed-files "files")]
+        msg (info "Succesfully processed" number-processed-files "files")]
     ; (exit 1 msg)
     ))
 
@@ -198,6 +198,28 @@
        (str/join \newline)))
 
 
+(defn process-bad-files
+  [coll output-path]
+  (let [all-files (->> (map io/as-file coll)
+                       (map #(.getAbsolutePath %)))
+        file-names-vec (->> (map io/as-file coll)
+                            (map #(.getName %)))
+        ]
+    all-files))
+
+(defn process-single-bad-file
+  [target-path file]
+  (let [source-path (->> (io/as-file file) .getAbsolutePath)
+        md5-sum (calculate-md5-substring-of-file file)
+        file-name-with-extension (->> (io/as-file file)
+                                      .getName)
+        file-name-without-extension (first (str/split file-name-with-extension #"\."))
+        dest-path (str target-path "NO_EXIF_DATA_FILES" "/" file-name-without-extension "-" md5-sum ".jpg")
+        prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
+        (warn "Copying BAD FILE" source-path "to" dest-path)
+  (copy-file source-path dest-path)))
+
+
 (defn -main [& args]
   (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
     (cond
@@ -215,13 +237,13 @@
               parsed-photos-without-exif (->>
                                           (files-to-process input-dir)
                                           :files-without-exif)]
-
-          (process-files parsed-photos-with-exif output-dir)
-
-          ;; TODO: handle :files-without-exif
-          (map #(error "This file does not contain exif data:" %) parsed-photos-without-exif))
-
+          (do
+            (if-let [number-good (> (count parsed-photos-with-exif) 0)] (process-files parsed-photos-with-exif output-dir) "No files to process found")
+            (if-let [number-bad (> (count parsed-photos-without-exif) 0)] (do 
+                                                                            (map #(process-single-bad-file output-dir %) parsed-photos-without-exif)
+                                                                            (info (count parsed-photos-without-exif) "files cannot be processed because they does not contain EXIF metadata. See `NO_EXIF_DATA_FILES` folder in the" output-dir "directory"))
+                                                                            "No bad files found")))
         (catch Exception e
-          (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))
-          ; (System/exit 1)
-          )))))
+          (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))))
+                                        ; (System/exit 1)
+      )))
