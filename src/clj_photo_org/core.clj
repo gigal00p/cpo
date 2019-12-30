@@ -239,11 +239,13 @@
                                           :files-without-exif)]
           (do
             (if-let [number-good (> (count parsed-photos-with-exif) 0)] (process-files parsed-photos-with-exif output-dir) "No files to process found")
-            (if-let [number-bad (> (count parsed-photos-without-exif) 0)] (do 
-                                                                            (map #(process-single-bad-file output-dir %) parsed-photos-without-exif)
-                                                                            (info (count parsed-photos-without-exif) "files cannot be processed because they does not contain EXIF metadata. See `NO_EXIF_DATA_FILES` folder in the" output-dir "directory"))
-                    "No bad files found")))
+            (if-let [number-bad (> (count parsed-photos-without-exif) 0)]
+              (do
+                (map #(process-single-bad-file output-dir %) parsed-photos-without-exif)
+                (info (count parsed-photos-without-exif) "files cannot be processed because they does not contain EXIF metadata. See `NO_EXIF_DATA_FILES` folder in the" output-dir "directory")) "No bad files found")))
+
+        (System/exit 1)
+
         (catch Exception e
           (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))))
-                                        ; (System/exit 1)
       )))
