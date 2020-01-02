@@ -21,8 +21,7 @@ desired dir structure.
 
 ## Installation
 
-Download latest fat jar from this repo releases or compile it using leiningen:
-
+Download latest fat jar from this repo [releases](https://github.com/gigal00p/cpo/releases) or compile it using leiningen:
 
 1. Install [Leiningen](https://leiningen.org/)
 2. `git clone https://github.com/gigal00p/cpo`
