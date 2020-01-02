@@ -232,7 +232,7 @@
                 (doall (map #(process-single-bad-file output-dir %) parsed-photos-without-exif))
                 (info "Couldn't parse" no-of-bad "files")))))
 
-        ; (System/exit 1)
+        (exit 0 "Program finished.")
 
         (catch Exception e
           (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e)))))))
