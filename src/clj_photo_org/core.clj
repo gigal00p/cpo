@@ -184,7 +184,7 @@
 
 
 (defn help [options]
-  (->> ["clj-photo-org is a command line tool for converting output of `xsv stats` into sql ddl files."
+  (->> ["clj-photo-org is a command line tool for organizing collection of jpg files into directory structure."
         ""
         "Usage: java -jar clj-photo-org-0.1.0-standalone.jar [options]"
         ""
