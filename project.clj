@@ -5,7 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [clojure.java-time "0.3.2"]
-                 [org.clojure/tools.cli "0.4.2"]
+                 [org.clojure/tools.cli "1.0.194"]
                  [com.taoensso/timbre "4.10.0"]
                  [digest "1.4.9"]
                  [eftest "0.5.9"]  ; testing library
