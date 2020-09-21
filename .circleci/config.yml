@@ -21,5 +21,6 @@ jobs:
           key: cpo-{{ checksum "project.clj" }}
       - run: lein do test, uberjar
       - store_artifacts:
-          path: target/uberjar/cpo-0.0.1-SNAPSHOT-standalone.jar
+          path: ~/cpo/uberjar/cpo-0.0.1-SNAPSHOT-standalone.jar
+          destination: cpo-0.0.1-SNAPSHOT-standalone.jar
 destination: uberjar
