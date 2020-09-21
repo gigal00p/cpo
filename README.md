@@ -1,4 +1,4 @@
-# clj-photo-org
+# clj-photo-org [![CircleCI](https://circleci.com/gh/gigal00p/cpo.svg?style=svg)](https://circleci.com/gh/gigal00p/cpo)
 
 `cpo` is simple CLI tool that renames JPG photos and organizes them into `YYYY/MM-MONTH-NAME`
 directory structure.
