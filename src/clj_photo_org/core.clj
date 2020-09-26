@@ -203,7 +203,7 @@
         file-name-without-extension (first (str/split file-name-with-extension #"\."))
         dest-path (str target-path "/" "NO_EXIF_DATA_FILES" "/" file-name-without-extension "-" md5-sum ".jpg")
         prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
-    (info "File" file-name-with-extension "does not contain EXIF meatadata and will be copied to" dest-path)
+    (warn "File" file-name-with-extension "does not contain EXIF meatadata and will be copied to" dest-path)
     (copy-file source-path dest-path)))
 
 
