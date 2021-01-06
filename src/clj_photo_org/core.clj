@@ -2,15 +2,14 @@
   (:gen-class)
   (:require
    [clojure.java.io :as io]
-   [clojure.spec.alpha :as s]
    [clojure.string :as str]
    [clojure.tools.cli :refer [parse-opts]]
    [digest]
    [eftest.runner :refer [find-tests run-tests]]
    [java-time :as time]
    [exif-processor.core :as exf]
-   [taoensso.timbre :as timbre :refer [debug  info  warn  error  fatal]]))
 
+   [taoensso.timbre :as timbre :refer [info  warn  error]]))
 (refer-clojure :exclude [range iterate format max min])
 
 
@@ -40,14 +39,13 @@
   [path & {:keys [recursively]}]
   (let [file (io/file path)
         coll (if (.isDirectory file)
-               (do
                  (if (= true recursively)
                    (file-seq file)
                    (->> file
-                        .listFiles)))
-               (do (error (str "Passed path: `" path "` is not a directory"))
+                        .listFiles))
+               (error (str "Passed path: `" path "` is not a directory"))
                    ; (exit -1 "Cannot proceed")
-                   ))] ; exit if passed dir string does not exist
+                   )] ; exit if passed dir string does not exist
     (if (empty? coll)
       [] ; retrn empty vector if directory does not contain any elements, otherwise return results
       (remove #(.isDirectory %) coll))))
@@ -70,7 +68,6 @@
             files-without-exif (get all-files false)]
         {:files-with-exif files-with-exif
          :files-without-exif files-without-exif}))))
-
 
 (defn make-date-object
   [string-date]
@@ -149,7 +146,7 @@
         dest-month-number (:month-as-string element)
         dest-month-name (:month-name element)
         dest-path (str target-root-directory "/" dest-year "/" dest-month-number "-" dest-month-name "/" (:target-name element))
-        prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
+        _ (io/make-parents dest-path)] ; prepare directory tree for target file
     (info "Copying file" source-path "to" dest-path)
     (copy-file source-path dest-path)))
 
@@ -202,13 +199,13 @@
                                       .getName)
         file-name-without-extension (first (str/split file-name-with-extension #"\."))
         dest-path (str target-path "/" "NO_EXIF_DATA_FILES" "/" file-name-without-extension "-" md5-sum ".jpg")
-        prepare-target (io/make-parents dest-path)] ; prepare directory tree for target file
+        _ (io/make-parents dest-path)] ; prepare directory tree for target file
     (warn "File" file-name-with-extension "does not contain EXIF meatadata and will be copied to" dest-path)
     (copy-file source-path dest-path)))
 
 
 (defn -main [& args]
-  (let [{:keys [options arguments errors summary]} (parse-opts args cli-options)]
+  (let [{:keys [options errors summary]} (parse-opts args cli-options)]
     (cond
       (:help options) (exit 0 (help summary))
       (not= (count options) 2) (exit 0 (str "Not enough options provided, usage:\n\n" (help summary)))
@@ -224,15 +221,17 @@
               no-of-good (count parsed-photos-with-exif)
               no-of-bad (count parsed-photos-without-exif)]
 
-          (do
-            (if-let [number-good (> (count parsed-photos-with-exif) 0)]
-              (process-files parsed-photos-with-exif output-dir) "No files to process found")
-            (if-let [number-bad (> (count parsed-photos-without-exif) 0)]
-              (do
-                (doall (map #(process-single-bad-file output-dir %) parsed-photos-without-exif))
-                (info "Couldn't parse" no-of-bad "files")))))
+            (if (> no-of-good 0)
+              (process-files parsed-photos-with-exif output-dir)
+              "No files to process found")
+
+            (if (> no-of-bad 0)
+              (doall (map #(process-single-bad-file output-dir %) parsed-photos-without-exif))
+                  (info "Couldn't parse" no-of-bad "files")))
 
         (exit 0 "Program finished.")
 
         (catch Exception e
           (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e)))))))
+
+(comment (run-tests (find-tests "test")))
