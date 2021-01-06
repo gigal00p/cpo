@@ -55,7 +55,7 @@
   "Check if there are any files to process"
   [dir]
   (let [all-files (get-full-path-files-in-dir dir :recursively true)
-        filters [#(.endsWith % ".JPG") #(.endsWith % ".jpg")]
+        filters [#(.endsWith (.toLowerCase %) ".jpg") #(.endsWith (.toLowerCase %) ".jpeg")]
         potential-files-to-process (if (empty? all-files)
                                      ()
                                      (->> (map #(.getAbsolutePath %) all-files)))

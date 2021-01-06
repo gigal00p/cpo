@@ -50,7 +50,7 @@ Via github.
 
 ## License
 
-Copyright © 2019 gigal00p
+Copyright © 2020 gigal00p
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
