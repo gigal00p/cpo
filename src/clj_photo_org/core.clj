@@ -58,8 +58,8 @@
         filters [#(.endsWith (.toLowerCase %) ".jpg") #(.endsWith (.toLowerCase %) ".jpeg")]
         potential-files-to-process (if (empty? all-files)
                                      ()
-                                     (->> (map #(.getAbsolutePath %) all-files)))
-        valid-files-to-process  (->> (map #(filter % potential-files-to-process) filters)
+                                     (->> (pmap #(.getAbsolutePath %) all-files)))
+        valid-files-to-process  (->> (pmap #(filter % potential-files-to-process) filters)
                                      flatten)]
     (if (empty? valid-files-to-process)
       (error (str "No files to process in the directory" dir))
