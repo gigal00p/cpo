@@ -6,10 +6,10 @@
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [clojure.java-time "0.3.2"]
                  [org.clojure/tools.cli "1.0.194"]
-                 [com.taoensso/timbre "4.10.0"]
-                 [digest "1.4.9"]
+                 [com.taoensso/timbre "5.1.0"]
+                 [digest "1.4.10"]
                  [eftest "0.5.9"]  ; testing library
-                 [expound "0.8.4"] ; error messages for clojure spec
+                 [expound "0.8.7"] ; error messages for clojure spec
                  [io.joshmiller/exif-processor "0.2.0"]]
   :main ^:skip-aot clj-photo-org.core
   :target-path "target/%s"
