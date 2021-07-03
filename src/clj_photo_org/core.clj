@@ -234,4 +234,6 @@
         (catch Exception e
           (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e)))))))
 
-(comment (run-tests (find-tests "test")))
+(comment
+  (run-tests (find-tests "test"))
+  )
