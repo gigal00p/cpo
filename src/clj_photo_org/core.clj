@@ -8,9 +8,14 @@
    [eftest.runner :refer [find-tests run-tests]]
    [java-time :as time]
    [exif-processor.core :as exf]
-
    [taoensso.timbre :as timbre :refer [info  warn  error]]))
+
 (refer-clojure :exclude [range iterate format max min])
+
+
+(defn arg-assert [fn msg]
+  (assert fn (throw (IllegalArgumentException.
+                     (str msg)))))
 
 
 (defn exit [status msg]
@@ -21,14 +26,36 @@
 (defn read-exif-photo-date-taken
   "TODO docstring"
   [photo-file-path]
-  (let [input-file (io/as-file photo-file-path)
-        all-metadata (exf/exif-for-file input-file)]
-    (get all-metadata "Date/Time")))
+  (try
+    (let [input-file (io/as-file photo-file-path)
+          all-metadata (exf/exif-for-file input-file)
+          date-metadata (get all-metadata "Date/Time")]
+      date-metadata)
+    (catch Exception e )))
+
+
+
+(defn is-valid-date-string?
+  "Returns true if passed string has the following format: `2021:10:12 16:21:43`, false otherwise"
+  [s]
+  (if (string? s)
+    (let [extracted-year (->> (str/split s #":") first)
+          extracted-month (->> (str/split s #":") second)]
+      (if (and (not (empty? extracted-year))
+               (not (empty? extracted-month))
+               (not= extracted-year "0000")
+               (not= extracted-month "00")
+               (= (count extracted-year) 4) ;; we expect 4 digit year and 2 digit month
+               (= (count extracted-month) 2))
+        true
+        false))
+    false))
+
 
 
 (defn has-exif-data?
   [file-path]
-  (if (string? (read-exif-photo-date-taken file-path))
+  (if (is-valid-date-string? (read-exif-photo-date-taken file-path))
     true
     false))
 
@@ -39,13 +66,11 @@
   [path & {:keys [recursively]}]
   (let [file (io/file path)
         coll (if (.isDirectory file)
-                 (if (= true recursively)
-                   (file-seq file)
-                   (->> file
-                        .listFiles))
-               (error (str "Passed path: `" path "` is not a directory"))
-                   ; (exit -1 "Cannot proceed")
-                   )] ; exit if passed dir string does not exist
+               (if (= true recursively)
+                 (file-seq file)
+                 (->> file
+                      .listFiles))
+               (error (str "Passed path: `" path "` is not a directory")))]
     (if (empty? coll)
       [] ; retrn empty vector if directory does not contain any elements, otherwise return results
       (remove #(.isDirectory %) coll))))
@@ -79,20 +104,22 @@
   (vec (.getMethods (.getClass myObject))))
 
 
-(defn stringify-single-digit
-  [month-number]
+(defn stringify-single-digit [month-number]
+  (arg-assert (and (number? month-number)
+                   (pos? month-number)) "Incorrect input, integers greater than 0 only")
   (if (< month-number 10)
     (str "0" month-number)
     (str month-number)))
 
 
-(defn replace-colon-with-dash
-  [date-time-string]
+(defn replace-colon-with-dash [date-time-string]
+  (arg-assert (string? date-time-string) "Incorrect input, strings input only, example: '2021:10:10'")
   (str/replace date-time-string #":" "-"))
 
 
 (defn check-date-format
   [string]
+  (arg-assert (string? string) "Incorrect input, strings input only")
   (if (= (count string) 16)
     (str string "-00")
     string))
@@ -112,26 +139,29 @@
 
 (defn make-photo-map
   [photo]
-  (let [date-object (make-date-object (read-exif-photo-date-taken photo))
-        day-of-month (.getDayOfMonth date-object)
-        weekday (.toString (.getDayOfWeek date-object))
-        month (.getMonthValue date-object)
-        month-as-string (stringify-single-digit month)
-        month-name (.toString (.getMonth date-object))
-        year (.getYear date-object)
-        date-time-as-string (check-date-format (replace-colon-with-dash (.toString date-object)))
-        md5-sum (calculate-md5-substring-of-file photo)
-        target-name (str date-time-as-string "-" md5-sum ".jpg")]
-    {:day-of-month day-of-month
-     :weekday weekday
-     :month month
-     :month-as-string month-as-string
-     :month-name month-name
-     :year year
-     :date-time-as-string date-time-as-string
-     :file-path photo
-     :file-md5-sum md5-sum
-     :target-name target-name})) 
+  (timbre/info "Processing file " photo)
+  (try
+    (let [date-object (make-date-object (read-exif-photo-date-taken photo))
+          day-of-month (.getDayOfMonth date-object)
+          weekday (.toString (.getDayOfWeek date-object))
+          month (.getMonthValue date-object)
+          month-as-string (stringify-single-digit month)
+          month-name (.toString (.getMonth date-object))
+          year (.getYear date-object)
+          date-time-as-string (check-date-format (replace-colon-with-dash (.toString date-object)))
+          md5-sum (calculate-md5-substring-of-file photo)
+          target-name (str date-time-as-string "-" md5-sum ".jpg")]
+      {:day-of-month day-of-month
+       :weekday weekday
+       :month month
+       :month-as-string month-as-string
+       :month-name month-name
+       :year year
+       :date-time-as-string date-time-as-string
+       :file-path photo
+       :file-md5-sum md5-sum
+       :target-name target-name})
+    (catch Exception e (str "caught exception for file " photo " Error:" (.getMessage e)))))
 
 
 (defn copy-file
@@ -200,14 +230,15 @@
         file-name-without-extension (first (str/split file-name-with-extension #"\."))
         dest-path (str target-path "/" "NO_EXIF_DATA_FILES" "/" file-name-without-extension "-" md5-sum ".jpg")
         _ (io/make-parents dest-path)] ; prepare directory tree for target file
-    (warn "File" file-name-with-extension "does not contain EXIF meatadata and will be copied to" dest-path)
+    (warn "File" file-name-with-extension "does not contain valid `Date/Time` EXIF meatadata and will be copied to" dest-path)
     (copy-file source-path dest-path)))
 
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)]
     (cond
-      (:help options) (exit 0 (help summary))
+      (:help options)
+      (exit 0 (help summary))
       (not= (count options) 2) (exit 0 (str "Not enough options provided, usage:\n\n" (help summary)))
       (not= (count errors) 0) (exit 0 (str "CLI arguments parsing failed, usage:\n\n" (help summary)))
       :else
@@ -221,19 +252,21 @@
               no-of-good (count parsed-photos-with-exif)
               no-of-bad (count parsed-photos-without-exif)]
 
-            (if (> no-of-good 0)
-              (process-files parsed-photos-with-exif output-dir)
-              "No files to process found")
+          (if (> no-of-good 0)
+            (process-files parsed-photos-with-exif output-dir)
+            "No files to process found")
 
-            (if (> no-of-bad 0)
-              (doall (map #(process-single-bad-file output-dir %) parsed-photos-without-exif))
-                  (info "Couldn't parse" no-of-bad "files")))
+          (if (> no-of-bad 0)
+            (doall (map #(process-single-bad-file output-dir %) parsed-photos-without-exif))
+            (info "Couldn't parse" no-of-bad "files")))
 
         (exit 0 "Program finished.")
 
         (catch Exception e
-          (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e)))))))
+          (timbre/errorf "Something went wrong: %s" (.getMessage ^Exception e))
+          (exit 1 "Program finished."))))))
 
-(comment
-  (run-tests (find-tests "test"))
-  )
+  (comment
+    (run-tests (find-tests "test"))
+    (-main "-i" "/input" "-o" "/output")
+    )
