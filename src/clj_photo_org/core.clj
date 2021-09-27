@@ -166,7 +166,9 @@
 
 (defn copy-file
   [source-path dest-path]
-  (io/copy (io/file source-path) (io/file dest-path)))
+  (if (not (nil? source-path))
+    (io/copy (io/file source-path) (io/file dest-path))
+    (warn "File" source-path "does not contain exist")))
 
 
 (defn process-one-element
@@ -183,7 +185,7 @@
 
 (defn process-files
   [coll target-directory]
-  (let [number-processed-files (->> (map #(process-one-element % target-directory) coll)
+  (let [number-processed-files (->> (pmap #(process-one-element % target-directory) coll)
                                     (into [])
                                     count)
         msg (info "Succesfully processed" number-processed-files "files")]))
