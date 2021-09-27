@@ -1,4 +1,4 @@
-image: clojure:latest
+image: clojure:openjdk-18-lein-slim-buster
 
 stages:
   - test
