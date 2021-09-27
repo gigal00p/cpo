@@ -18,6 +18,7 @@ ancient:
     - mkdir -p "$CI_PROJECT_DIR/.lein"
     - echo "$LEIN_SETTINGS" > "$CI_PROJECT_DIR/.lein/profiles.clj"
   script:
+    - echo $LEIN_SETTINGS
     - lein ancient
   allow_failure: true
 
