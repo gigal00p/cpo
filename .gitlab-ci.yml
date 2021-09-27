@@ -1,0 +1,21 @@
+image: clojure:latest
+
+stages:
+  - test
+
+test:
+  stage: test
+  script:
+    - lein test
+
+ancient:
+  stage: test
+  script:
+    - lein ancient
+  allow_failure: true
+
+kibit:
+  stage: test
+  script:
+    - lein kibit
+  allow_failure: true
