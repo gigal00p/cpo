@@ -1,44 +1,21 @@
-image: clojure:openjdk-18-lein-slim-buster
+image: clojure:latest
 
 stages:
   - test
 
 test:
   stage: test
-  before_script:
-    - mkdir -p "$CI_PROJECT_DIR/.lein"
-    - cat "$LEIN_SETTINGS" > "$CI_PROJECT_DIR/.lein/profiles.clj"
-    - cat "$CI_PROJECT_DIR/.lein/profiles.clj"
   script:
-    - pwd
-    - cat .lein/profiles.clj
     - lein test
-  cache:
-    paths:
-    - "$CI_PROJECT_DIR/.m2/repository/"
 
 ancient:
   stage: test
-  before_script:
-    - mkdir -p "$CI_PROJECT_DIR/.lein"
-    - cat "$LEIN_SETTINGS" > "$CI_PROJECT_DIR/.lein/profiles.clj"
-    - lein deps
   script:
     - lein ancient
   allow_failure: true
-  cache:
-    paths:
-    - "$CI_PROJECT_DIR/.m2/repository/"
 
 kibit:
   stage: test
-  before_script:
-    - mkdir -p "$CI_PROJECT_DIR/.lein"
-    - cat "$LEIN_SETTINGS" > "$CI_PROJECT_DIR/.lein/profiles.clj"
-    - lein deps
   script:
     - lein kibit
   allow_failure: true
-  cache:
-    paths:
-    - "$CI_PROJECT_DIR/.m2/repository/"
