@@ -5,17 +5,26 @@ stages:
 
 test:
   stage: test
+  before_script:
+    - mkdir -p .lein
+    - echo $LEIN_SETTINGS > ~/.lein/profiles.clj
   script:
     - lein test
 
 ancient:
   stage: test
+  before_script:
+    - mkdir -p .lein
+    - echo $LEIN_SETTINGS > ~/.lein/profiles.clj
   script:
     - lein ancient
   allow_failure: true
 
 kibit:
   stage: test
+  before_script:
+    - mkdir -p .lein
+    - echo $LEIN_SETTINGS > ~/.lein/profiles.clj
   script:
     - lein kibit
   allow_failure: true

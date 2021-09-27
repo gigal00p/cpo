@@ -8,8 +8,6 @@
                  [org.clojure/tools.cli "1.0.206"]
                  [com.taoensso/timbre "5.1.2"]
                  [digest "1.4.10"]
-                 [lein-kibit "0.1.8"]
-                 [lein-ancient "0.7.0"]
                  [eftest "0.5.9"]  ; testing library
                  [expound "0.8.9"] ; error messages for clojure spec
                  [io.joshmiller/exif-processor "0.2.0"]]
