@@ -9,10 +9,11 @@ lint:
   script:
     - lein cljfmt check
 
-test:
-  stage: test
+kibit:
+  stage: lint
   script:
-    - lein test
+    - lein kibit
+  allow_failure: true
 
 ancient:
   stage: test
@@ -20,8 +21,7 @@ ancient:
     - lein ancient
   allow_failure: true
 
-kibit:
+test:
   stage: test
   script:
-    - lein kibit
-  allow_failure: true
+    - lein test
