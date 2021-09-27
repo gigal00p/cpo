@@ -13,5 +13,7 @@
                  [io.joshmiller/exif-processor "0.2.0"]]
   :main ^:skip-aot clj-photo-org.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
-
+  :profiles {:uberjar {:aot :all}}
+  :plugins [[lein-ancient "0.7.0"]
+            [lein-eftest "0.5.9"]
+            [lein-kibit "0.1.8"]])
