@@ -8,6 +8,7 @@ test:
   before_script:
     - mkdir -p $CI_PROJECT_DIR/.lein
     - echo $LEIN_SETTINGS > $CI_PROJECT_DIR/.lein/profiles.clj
+    - cat $CI_PROJECT_DIR/.lein/profiles.clj
   script:
     - lein test
 
