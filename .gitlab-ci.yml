@@ -7,16 +7,16 @@ test:
   stage: test
   before_script:
     - mkdir -p $CI_PROJECT_DIR/.lein
-    - echo $LEIN_SETTINGS > $CI_PROJECT_DIR/.lein/profiles.clj
-    - cat $CI_PROJECT_DIR/.lein/profiles.clj
+    - echo "$LEIN_SETTINGS" > "$CI_PROJECT_DIR/.lein/profiles.clj"
+    - cat "$CI_PROJECT_DIR/.lein/profiles.clj"
   script:
     - lein test
 
 ancient:
   stage: test
   before_script:
-    - mkdir -p $CI_PROJECT_DIR/.lein
-    - echo $LEIN_SETTINGS > $CI_PROJECT_DIR/.lein/profiles.clj
+    - mkdir -p "$CI_PROJECT_DIR/.lein"
+    - echo "$LEIN_SETTINGS" > "$CI_PROJECT_DIR/.lein/profiles.clj"
   script:
     - lein ancient
   allow_failure: true
@@ -24,8 +24,8 @@ ancient:
 kibit:
   stage: test
   before_script:
-    - mkdir -p $CI_PROJECT_DIR/.lein
-    - echo $LEIN_SETTINGS > $CI_PROJECT_DIR/.lein/profiles.clj
+    - mkdir -p "$CI_PROJECT_DIR/.lein"
+    - echo "$LEIN_SETTINGS" > "$CI_PROJECT_DIR/.lein/profiles.clj"
   script:
     - lein kibit
   allow_failure: true
