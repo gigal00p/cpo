@@ -1,7 +1,13 @@
 image: clojure:latest
 
 stages:
+  - lint
   - test
+
+lint:
+  stage: lint
+  script:
+    - lein cljfmt check
 
 test:
   stage: test

@@ -16,4 +16,5 @@
   :profiles {:uberjar {:aot :all}}
   :plugins [[lein-ancient "0.7.0"]
             [lein-eftest "0.5.9"]
-            [lein-kibit "0.1.8"]])
+            [lein-kibit "0.1.8"]
+            [lein-cljfmt "0.7.0"]])
