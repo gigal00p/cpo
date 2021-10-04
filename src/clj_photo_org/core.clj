@@ -231,11 +231,11 @@
               no-of-good (count parsed-photos-with-exif)
               no-of-bad (count parsed-photos-without-exif)]
 
-          (if (> no-of-good 0)
+          (if (pos? no-of-good)
             (process-files parsed-photos-with-exif output-dir)
             "No files to process found")
 
-          (if (> no-of-bad 0)
+          (if (pos? no-of-bad)
             (doall (map #(process-single-bad-file output-dir %) parsed-photos-without-exif))
             (info "Couldn't parse" no-of-bad "files")))
 
