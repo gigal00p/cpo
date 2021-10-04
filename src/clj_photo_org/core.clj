@@ -34,10 +34,10 @@
   "Returns true if passed string has the following format: `2021:10:12 16:21:43`, false otherwise"
   [s]
   (if (string? s)
-    (let [extracted-year (->> (str/split s #":") first)
-          extracted-month (->> (str/split s #":") second)]
-      (if (and (not (empty? extracted-year))
-               (not (empty? extracted-month))
+    (let [extracted-year (first (str/split s #":"))
+          extracted-month (second (str/split s #":"))]
+      (if (and (seq extracted-year)
+               (seq extracted-month)
                (not= extracted-year "0000")
                (not= extracted-month "00")
                (= (count extracted-year) 4) ;; we expect 4 digit year and 2 digit month
@@ -58,10 +58,9 @@
   [path & {:keys [recursively]}]
   (let [file (io/file path)
         coll (if (.isDirectory file)
-               (if (= true recursively)
+               (if (true? recursively)
                  (file-seq file)
-                 (->> file
-                      .listFiles))
+                 (.listFiles file))
                (error (str "Passed path: `" path "` is not a directory")))]
     (if (empty? coll)
       [] ; retrn empty vector if directory does not contain any elements, otherwise return results
@@ -75,8 +74,7 @@
         potential-files-to-process (if (empty? all-files)
                                      ()
                                      (->> (pmap #(.getAbsolutePath %) all-files)))
-        valid-files-to-process  (->> (pmap #(filter % potential-files-to-process) filters)
-                                     flatten)]
+        valid-files-to-process  (flatten (pmap (fn* [p1__77779#] (filter p1__77779# potential-files-to-process)) filters))]
     (if (empty? valid-files-to-process)
       (error (str "No files to process in the directory" dir))
       (let [all-files (group-by has-exif-data? valid-files-to-process)
@@ -128,12 +126,12 @@
   (try
     (let [date-object (make-date-object (read-exif-photo-date-taken photo))
           day-of-month (.getDayOfMonth date-object)
-          weekday (.toString (.getDayOfWeek date-object))
+          weekday (str (.getDayOfWeek date-object))
           month (.getMonthValue date-object)
           month-as-string (stringify-single-digit month)
-          month-name (.toString (.getMonth date-object))
+          month-name (str (.getMonth date-object))
           year (.getYear date-object)
-          date-time-as-string (check-date-format (replace-colon-with-dash (.toString date-object)))
+          date-time-as-string (check-date-format (replace-colon-with-dash (str date-object)))
           md5-sum (calculate-md5-substring-of-file photo)
           target-name (str date-time-as-string "-" md5-sum ".jpg")]
       {:day-of-month day-of-month
@@ -150,9 +148,7 @@
 
 (defn copy-file
   [source-path dest-path]
-  (if (not (nil? source-path))
-    (io/copy (io/file source-path) (io/file dest-path))
-    (warn "File" source-path "does not contain exist")))
+  (if-not (nil? source-path) (io/copy (io/file source-path) (io/file dest-path)) (warn "File" source-path "does not contain exist")))
 
 (defn process-one-element
   [element target-root-directory]
@@ -170,7 +166,7 @@
   (let [number-processed-files (->> (pmap #(process-one-element % target-directory) coll)
                                     (into [])
                                     count)
-        msg (info "Succesfully processed" number-processed-files "files")]))
+        _ (info "Succesfully processed" number-processed-files "files")]))
 
 (defn delete-directory-recursive
   "Recursively delete a directory."
@@ -192,21 +188,13 @@
    ["-h" "--help"]])
 
 (defn help [options]
-  (->> ["clj-photo-org is a command line tool for organizing collection of jpg files into directory structure."
-        ""
-        "Usage: java -jar clj-photo-org-0.1.0-standalone.jar [options]"
-        ""
-        "Options:"
-        options
-        ""]
-       (str/join \newline)))
+  (str/join \newline ["clj-photo-org is a command line tool for organizing collection of jpg files into directory structure." "" "Usage: java -jar clj-photo-org-0.1.0-standalone.jar [options]" "" "Options:" options ""]))
 
 (defn process-single-bad-file
   [target-path file]
-  (let [source-path (->> (io/as-file file) .getAbsolutePath)
+  (let [source-path (.getAbsolutePath (io/as-file file))
         md5-sum (calculate-md5-substring-of-file file)
-        file-name-with-extension (->> (io/as-file file)
-                                      .getName)
+        file-name-with-extension (.getName (io/as-file file))
         file-name-without-extension (first (str/split file-name-with-extension #"\."))
         dest-path (str target-path "/" "NO_EXIF_DATA_FILES" "/" file-name-without-extension "-" md5-sum ".jpg")
         _ (io/make-parents dest-path)] ; prepare directory tree for target file
@@ -222,11 +210,10 @@
       (not= (count errors) 0) (exit 0 (str "CLI arguments parsing failed, usage:\n\n" (help summary)))
       :else
       (try
-        (let [input-dir (->> options :input)
-              output-dir (->> options :output)
+        (let [input-dir (:input options)
+              output-dir (:output options)
               all-files (files-to-process input-dir)
-              parsed-photos-with-exif (->> (:files-with-exif all-files)
-                                           (pmap #(make-photo-map %)))
+              parsed-photos-with-exif (pmap make-photo-map (:files-with-exif all-files))
               parsed-photos-without-exif (:files-without-exif all-files)
               no-of-good (count parsed-photos-with-exif)
               no-of-bad (count parsed-photos-without-exif)]
