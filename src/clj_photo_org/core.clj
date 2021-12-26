@@ -3,8 +3,10 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
+   [clojure.pprint :as pprint]
    [clojure.tools.cli :refer [parse-opts]]
    [digest]
+   [pantomime.extract :as extract]
    [eftest.runner :refer [find-tests run-tests]]
    [java-time :as time]
    [exif-processor.core :as exf]
@@ -234,4 +236,11 @@
 
 (comment
   (run-tests (find-tests "test"))
-  (-main "-i" "/input" "-o" "/output"))
+  (-main "-i" "/input" "-o" "/output")
+
+  ; (def mov-file "/home/walkiewk/Downloads/Hania_klaszcze.MOV")
+  (def mov-file "/home/walkiewk/Downloads/Hania_raczkuje_1.MOV")
+  (pprint/pprint (extract/parse mov-file))
+  (->> (extract/parse mov-file) :creation-date first)
+
+  )

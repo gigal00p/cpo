@@ -10,6 +10,7 @@
                  [digest "1.4.10"]
                  [eftest "0.5.9"]  ; testing library
                  [expound "0.8.10"] ; error messages for clojure spec
+                 [com.novemberain/pantomime "2.11.0"]
                  [io.joshmiller/exif-processor "0.2.0"]]
   :main ^:skip-aot clj-photo-org.core
   :target-path "target/%s"
