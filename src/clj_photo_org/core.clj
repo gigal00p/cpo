@@ -1,16 +1,14 @@
 (ns clj-photo-org.core
   (:gen-class)
+  (:refer-clojure :exclude [range iterate format max min])
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.tools.cli :refer [parse-opts]]
    [digest]
-   [eftest.runner :refer [find-tests run-tests]]
-   [java-time :as time]
+   [java-time :as time :refer [local-date-time]]
    [exif-processor.core :as exf]
    [taoensso.timbre :as timbre :refer [info  warn  error]]))
-
-(refer-clojure :exclude [range iterate format max min])
 
 (defn arg-assert [fn msg]
   (assert fn (throw (IllegalArgumentException.

@@ -1,6 +1,7 @@
 /target
 /classes
 /checkouts
+.cpcache/
 profiles.clj
 pom.xml
 pom.xml.asc
@@ -11,3 +12,4 @@ pom.xml.asc
 .hgignore
 .hg/
 resources/test_output
+.rebel_readline_history
