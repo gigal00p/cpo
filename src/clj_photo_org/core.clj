@@ -231,5 +231,11 @@
           (exit 1 "Program finished."))))))
 
 (comment
+
+  (require '[eftest.runner,:refer,[find-tests,run-tests]])
+
   (run-tests (find-tests "test"))
-  (-main "-i" "/input" "-o" "/output"))
+
+  (-main "-i" "/input" "-o" "/output")
+
+)

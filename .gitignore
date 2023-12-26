@@ -13,3 +13,6 @@ pom.xml.asc
 .hg/
 resources/test_output
 .rebel_readline_history
+.clj-kondo
+.git
+.lsp

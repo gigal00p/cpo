@@ -1,7 +1,6 @@
 (ns clj-photo-org.core-test
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
-            [clojure.string :as str]
             [clj-photo-org.core :refer :all]))
 
 (deftest get-full-path-files-in-dir-test
