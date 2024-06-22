@@ -232,7 +232,7 @@
 
 (comment
 
-  (require '[eftest.runner,:refer,[find-tests,run-tests]])
+  (require '[eftest.runner :refer [find-tests run-tests]])
 
   (run-tests (find-tests "test"))
 
