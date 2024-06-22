@@ -8,7 +8,10 @@
     [digest]
     [exif-processor.core :as exf]
     [java-time :as time :refer [local-date-time]]
-    [taoensso.timbre :as timbre :refer [info warn error]]))
+    [taoensso.timbre :as timbre :refer [info warn error]])
+
+  (:import [java.io BufferedInputStream FileInputStream]
+           [com.drew.imaging ImageMetadataReader]))
 
 
 (defn arg-assert
@@ -286,3 +289,36 @@
   (require '[eftest.runner :refer [find-tests run-tests]])
   (run-tests (find-tests "test"))
   (-main "-i" "/input" "-o" "/output"))
+
+
+(def exif-directory-regex
+  (re-pattern (str "(?i)(" (str/join "|"
+                                 ["Exif" "JPEG" "JFIF" "MP4"
+                                  "GPS"
+                                  "Agfa" "Canon" "Casio" "Epson"
+                                  "Fujifilm" "Kodak" "Kyocera"
+                                  "Leica" "Minolta" "Nikon" "Olympus"
+                                  "Panasonic" "Pentax" "QuickTime" "Sanyo"
+                                  "Sigma/Foveon" "Sony"]) ")")))
+
+(defn- extract-from-tag
+  [tag]
+  (into {} (map #(hash-map (.getTagName %) (.getDescription %)) tag)))
+
+(defn kw-exif-for-file
+  "Takes an image file (as a java.io.InputStream or java.io.File) and extracts exif information into a map"
+  [file]
+  (let [metadata (ImageMetadataReader/readMetadata file)
+        exif-directories (filter #(re-find exif-directory-regex (.getName %)) (.getDirectories metadata))
+        tags (map #(.getTags %) exif-directories)]
+    (into {} (map extract-from-tag tags))))
+
+(defn kw-exif-for-filename
+  "Loads a file from a give filename and extracts exif information into a map"
+  [filename]
+  (kw-exif-for-file (FileInputStream. filename)))
+
+;; (defn exif-for-url
+;;   "Streams a file from a given URL and extracts exif information into a map"
+;;   [url]
+;;   (exif-for-file (BufferedInputStream. (:body (client/get url {:as :stream})))))

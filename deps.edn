@@ -5,6 +5,7 @@
         com.taoensso/timbre {:mvn/version "6.5.0"},
         digest/digest {:mvn/version "1.4.10"},
         eftest/eftest {:mvn/version "0.6.0"},
+        com.drewnoakes/metadata-extractor {:mvn/version "2.19.0"},
         io.joshmiller/exif-processor {:mvn/version "0.4.0"}}
  :aliases
  {:run-m {:main-opts ["-m" "clj-photo-org.core"]}
