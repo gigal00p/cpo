@@ -9,9 +9,12 @@
     [exif-processor.core :as exf]
     [java-time :as time :refer [local-date-time]]
     [taoensso.timbre :as timbre :refer [info warn error]])
-
-  (:import [java.io BufferedInputStream FileInputStream]
-           [com.drew.imaging ImageMetadataReader]))
+  (:import
+    (com.drew.imaging
+      ImageMetadataReader)
+    (java.io
+      BufferedInputStream
+      FileInputStream)))
 
 
 (defn arg-assert
@@ -293,17 +296,19 @@
 
 (def exif-directory-regex
   (re-pattern (str "(?i)(" (str/join "|"
-                                 ["Exif" "JPEG" "JFIF" "MP4"
-                                  "GPS"
-                                  "Agfa" "Canon" "Casio" "Epson"
-                                  "Fujifilm" "Kodak" "Kyocera"
-                                  "Leica" "Minolta" "Nikon" "Olympus"
-                                  "Panasonic" "Pentax" "QuickTime" "Sanyo"
-                                  "Sigma/Foveon" "Sony"]) ")")))
+                                     ["Exif" "JPEG" "JFIF" "MP4"
+                                      "GPS"
+                                      "Agfa" "Canon" "Casio" "Epson"
+                                      "Fujifilm" "Kodak" "Kyocera"
+                                      "Leica" "Minolta" "Nikon" "Olympus"
+                                      "Panasonic" "Pentax" "QuickTime" "Sanyo"
+                                      "Sigma/Foveon" "Sony"]) ")")))
+
 
 (defn- extract-from-tag
   [tag]
   (into {} (map #(hash-map (.getTagName %) (.getDescription %)) tag)))
+
 
 (defn kw-exif-for-file
   "Takes an image file (as a java.io.InputStream or java.io.File) and extracts exif information into a map"
@@ -313,10 +318,12 @@
         tags (map #(.getTags %) exif-directories)]
     (into {} (map extract-from-tag tags))))
 
+
 (defn kw-exif-for-filename
   "Loads a file from a give filename and extracts exif information into a map"
   [filename]
   (kw-exif-for-file (FileInputStream. filename)))
+
 
 ;; (defn exif-for-url
 ;;   "Streams a file from a given URL and extracts exif information into a map"
