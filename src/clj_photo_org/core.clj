@@ -1,19 +1,25 @@
 (ns clj-photo-org.core
-  (:gen-class)
   (:refer-clojure :exclude [range iterate format max min])
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
-            [clojure.tools.cli :refer [parse-opts]]
-            [digest]
-            [java-time :as time :refer [local-date-time]]
-            [exif-processor.core :as exf]
-            [taoensso.timbre :as timbre :refer [info warn error]]))
+  (:gen-class)
+  (:require
+    [clojure.java.io :as io]
+    [clojure.string :as str]
+    [clojure.tools.cli :refer [parse-opts]]
+    [digest]
+    [exif-processor.core :as exf]
+    [java-time :as time :refer [local-date-time]]
+    [taoensso.timbre :as timbre :refer [info warn error]]))
+
 
 (defn arg-assert
   [fn msg]
   (assert fn (throw (IllegalArgumentException. (str msg)))))
 
-(defn exit [status msg] (println msg) (System/exit status))
+
+(defn exit
+  [status msg]
+  (println msg) (System/exit status))
+
 
 (defn read-exif-photo-date-taken
   "TODO docstring"
@@ -23,6 +29,7 @@
              date-metadata (get all-metadata "Date/Time")]
          date-metadata)
        (catch Exception e)))
+
 
 (defn is-valid-date-string?
   "Returns true if passed string has the following format: `2021:10:12 16:21:43`, false otherwise"
@@ -34,18 +41,20 @@
                (seq extracted-month)
                (not= extracted-year "0000")
                (not= extracted-month "00")
-               (= (count extracted-year) 4) ;; we expect 4 digit year and 2
-                                            ;; digit month
+               (= (count extracted-year) 4) ; we expect 4 digit year and 2
+               ;; digit month
                (= (count extracted-month) 2))
         true
         false))
     false))
+
 
 (defn has-exif-data?
   [file-path]
   (if (is-valid-date-string? (read-exif-photo-date-taken file-path))
     true
     false))
+
 
 (defn get-full-path-files-in-dir
   "Returns LazySeq of java.io.File objects of the passed directory.
@@ -57,8 +66,9 @@
                (error (str "Passed path: `" path "` is not a directory")))]
     (if (empty? coll)
       [] ; retrn empty vector if directory does not contain any elements,
-         ; otherwise return results
+      ;; otherwise return results
       (remove #(.isDirectory %) coll))))
+
 
 (defn files-to-process
   "Check if there are any files to process"
@@ -72,7 +82,7 @@
                                                 all-files)))
         valid-files-to-process
         (flatten (pmap (fn* [p1__77779#]
-                         (filter p1__77779# potential-files-to-process))
+                            (filter p1__77779# potential-files-to-process))
                        filters))]
     (if (empty? valid-files-to-process)
       (error (str "No files to process in the directory" dir))
@@ -82,11 +92,16 @@
         {:files-with-exif files-with-exif,
          :files-without-exif files-without-exif}))))
 
+
 (defn make-date-object
   [string-date]
   (time/local-date-time "yyyy:MM:dd HH:mm:ss" string-date))
 
-(defn get-object-methods [myObject] (vec (.getMethods (.getClass myObject))))
+
+(defn get-object-methods
+  [myObject]
+  (vec (.getMethods (.getClass myObject))))
+
 
 (defn stringify-single-digit
   [month-number]
@@ -94,16 +109,19 @@
               "Incorrect input, integers greater than 0 only")
   (if (< month-number 10) (str "0" month-number) (str month-number)))
 
+
 (defn replace-colon-with-dash
   [date-time-string]
   (arg-assert (string? date-time-string)
               "Incorrect input, strings input only, example: '2021:10:10'")
   (str/replace date-time-string #":" "-"))
 
+
 (defn check-date-format
   [string]
   (arg-assert (string? string) "Incorrect input, strings input only")
   (if (= (count string) 16) (str string "-00") string))
+
 
 (defn calculate-md5-substring-of-file
   "Calculate md5 sum of file. Return string of first 7 characters
@@ -113,6 +131,7 @@
     (if (.exists file)
       (subs (digest/md5 file) 0 7)
       (do (warn "File" file-path "does not exists") nil))))
+
 
 (defn make-photo-map
   [photo]
@@ -125,7 +144,7 @@
              month-name (str (.getMonth date-object))
              year (.getYear date-object)
              date-time-as-string (check-date-format (replace-colon-with-dash
-                                                     (str date-object)))
+                                                      (str date-object)))
              md5-sum (calculate-md5-substring-of-file photo)
              target-name (str date-time-as-string "-" md5-sum ".jpg")]
          {:day-of-month day-of-month,
@@ -141,11 +160,13 @@
        (catch Exception e
          (str "caught exception for file " photo " Error:" (.getMessage e)))))
 
+
 (defn copy-file
   [source-path dest-path]
   (if-not (nil? source-path)
     (io/copy (io/file source-path) (io/file dest-path))
     (warn "File" source-path "does not contain exist")))
+
 
 (defn process-one-element
   [element target-root-directory]
@@ -159,9 +180,10 @@
                        "-" dest-month-name
                        "/" (:target-name element))
         _ (io/make-parents dest-path)] ; prepare directory tree for target
-                                       ; file
+    ;; file
     (info "Copying file" source-path "to" dest-path)
     (copy-file source-path dest-path)))
+
 
 (defn process-files
   [coll target-directory]
@@ -170,6 +192,7 @@
              (into [])
              count)
         _ (info "Succesfully processed" number-processed-files "files")]))
+
 
 (defn delete-directory-recursive
   "Recursively delete a directory."
@@ -185,19 +208,22 @@
   ;; contents with the code above (remember?)
   (io/delete-file file))
 
+
 (def cli-options
   [["-i" "--input DIR"
     "Directory that contains JPG files (can be nested dir structure)"]
    ["-o" "--output DIR" "Where renamed and organized JPG files will be written"]
    ["-h" "--help"]])
 
+
 (defn help
   [options]
   (str/join
-   \newline
-   ["clj-photo-org is a command line tool for organizing collection of jpg files into directory structure."
-    "" "Usage: java -jar clj-photo-org-0.1.0-standalone.jar [options]" ""
-    "Options:" options ""]))
+    \newline
+    ["clj-photo-org is a command line tool for organizing collection of jpg files into directory structure."
+     "" "Usage: java -jar clj-photo-org-0.1.0-standalone.jar [options]" ""
+     "Options:" options ""]))
+
 
 (defn process-single-bad-file
   [target-path file]
@@ -215,12 +241,13 @@
                        md5-sum
                        ".jpg")
         _ (io/make-parents dest-path)] ; prepare directory tree for target
-                                       ; file
+    ;; file
     (warn
-     "File" file-name-with-extension
-     "does not contain valid `Date/Time` EXIF meatadata and will be copied to"
-     dest-path)
+      "File" file-name-with-extension
+      "does not contain valid `Date/Time` EXIF meatadata and will be copied to"
+      dest-path)
     (copy-file source-path dest-path)))
+
 
 (defn -main
   [& args]
@@ -238,7 +265,7 @@
                            parsed-photos-with-exif
                            (pmap make-photo-map (:files-with-exif all-files))
                            parsed-photos-without-exif (:files-without-exif
-                                                       all-files)
+                                                        all-files)
                            no-of-good (count parsed-photos-with-exif)
                            no-of-bad (count parsed-photos-without-exif)]
                        (if (pos? no-of-good)
@@ -253,6 +280,7 @@
                        (timbre/errorf "Something went wrong: %s"
                                       (.getMessage ^Exception e))
                        (exit 1 "Program finished."))))))
+
 
 (comment
   (require '[eftest.runner :refer [find-tests run-tests]])
