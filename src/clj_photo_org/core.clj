@@ -6,12 +6,14 @@
     [clojure.string :as str]
     [clojure.tools.cli :refer [parse-opts]]
     [digest]
+    [tick.core :as t]
     [exif-processor.core :as exf]
     [java-time :as time :refer [local-date-time]]
     [taoensso.timbre :as timbre :refer [info warn error]])
   (:import
     (com.drew.imaging
       ImageMetadataReader)
+    (java.time.format DateTimeFormatter)
     (java.io
       BufferedInputStream
       FileInputStream)))
@@ -323,3 +325,11 @@
   "Loads a file from a give filename and extracts exif information into a map"
   [filename]
   (kw-exif-for-file (FileInputStream. filename)))
+
+;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
+(def movie-formatter (DateTimeFormatter/ofPattern "E MMM d HH:mm:ss ZZZZZ u"))
+
+(comment
+  (-> (kw-exif-for-filename "/home/sa/zlom/MEDIA_RODZINNE/2024/video/IMG_0101.MOV")
+      (get "Creation Time")
+      (t/parse-date movie-formatter)))
