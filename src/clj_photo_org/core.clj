@@ -323,9 +323,3 @@
   "Loads a file from a give filename and extracts exif information into a map"
   [filename]
   (kw-exif-for-file (FileInputStream. filename)))
-
-
-;; (defn exif-for-url
-;;   "Streams a file from a given URL and extracts exif information into a map"
-;;   [url]
-;;   (exif-for-file (BufferedInputStream. (:body (client/get url {:as :stream})))))
