@@ -6,17 +6,18 @@
     [clojure.string :as str]
     [clojure.tools.cli :refer [parse-opts]]
     [digest]
-    [tick.core :as t]
     [exif-processor.core :as exf]
     [java-time :as time :refer [local-date-time]]
-    [taoensso.timbre :as timbre :refer [info warn error]])
+    [taoensso.timbre :as timbre :refer [info warn error]]
+    [tick.core :as t])
   (:import
     (com.drew.imaging
       ImageMetadataReader)
-    (java.time.format DateTimeFormatter)
     (java.io
       BufferedInputStream
-      FileInputStream)))
+      FileInputStream)
+    (java.time.format
+      DateTimeFormatter)))
 
 
 (defn arg-assert
@@ -33,28 +34,41 @@
   "TODO docstring"
   [photo-file-path]
   (try (let [input-file (io/as-file photo-file-path)
-             all-metadata (exf/exif-for-file input-file)
-             date-metadata (get all-metadata "Date/Time")]
+             all-metadata (kw-exif-for-file input-file)
+             date-metadata (or
+                             ;; photos
+                             (get all-metadata "Date/Time")
+                             ;; videos
+                             (get all-metadata "Creation Time"))]
          date-metadata)
        (catch Exception e)))
 
 
+;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
+;; Example: "2024:06:23 12:41:17"
+(def photo-formatter (DateTimeFormatter/ofPattern "yyyy:MM:dd HH:mm:ss"))
+
+
+;; Example: "Thu Apr 11 09:04:47 +02:00 2024"
+(def movie-formatter (DateTimeFormatter/ofPattern "E MMM d HH:mm:ss ZZZZZ u"))
+
+
+;; TODO implement validation
 (defn is-valid-date-string?
-  "Returns true if passed string has the following format: `2021:10:12 16:21:43`, false otherwise"
+  "Returns true if passed string has the following formats: [`2021:10:12 16:21:43`, `Thu Apr 11 09:04:47 +02:00 2024`] , false otherwise"
   [s]
   (if (string? s)
-    (let [extracted-year (first (str/split s #":"))
-          extracted-month (second (str/split s #":"))]
-      (if (and (seq extracted-year)
-               (seq extracted-month)
-               (not= extracted-year "0000")
-               (not= extracted-month "00")
-               (= (count extracted-year) 4) ; we expect 4 digit year and 2
-               ;; digit month
-               (= (count extracted-month) 2))
-        true
-        false))
-    false))
+    (if
+      (or (try (t/parse-date s movie-formatter)
+               (catch Exception e
+                 ;; (println "Unknown EXIF metadata date format")
+                 false))
+          (try (t/parse-date s photo-formatter)
+               (catch Exception e
+                 ;; (println "Unknown EXIF metadata date format")
+                 false)))
+      true
+      false)))
 
 
 (defn has-exif-data?
@@ -83,7 +97,9 @@
   [dir]
   (let [all-files (get-full-path-files-in-dir dir :recursively true)
         filters [#(.endsWith (.toLowerCase %) ".jpg")
-                 #(.endsWith (.toLowerCase %) ".jpeg")]
+                 #(.endsWith (.toLowerCase %) ".jpeg")
+                 #(.endsWith (.toLowerCase %) ".mov")
+                 #(.endsWith (.toLowerCase %) ".mp4")]
         potential-files-to-process (if (empty? all-files)
                                      ()
                                      (->> (pmap #(.getAbsolutePath %)
@@ -101,9 +117,23 @@
          :files-without-exif files-without-exif}))))
 
 
+;; (defn make-date-object
+;;   [string-date]
+;;   (time/local-date-time "yyyy:MM:dd HH:mm:ss" string-date))
+
+
 (defn make-date-object
   [string-date]
-  (time/local-date-time "yyyy:MM:dd HH:mm:ss" string-date))
+  (let [photo-date-object (try (time/local-date-time photo-formatter string-date)
+                               (catch Exception e false))
+        movie-date-object (try (time/local-date-time movie-formatter string-date)
+                               (catch Exception e false))]
+
+    (if (not
+          (some #(instance? java.time.LocalDateTime %) [photo-date-object movie-date-object]))
+      (throw (Exception. "No valid date in the exif metadata")))
+
+    (first (remove false? [photo-date-object movie-date-object]))))
 
 
 (defn get-object-methods
@@ -154,7 +184,8 @@
              date-time-as-string (check-date-format (replace-colon-with-dash
                                                       (str date-object)))
              md5-sum (calculate-md5-substring-of-file photo)
-             target-name (str date-time-as-string "-" md5-sum ".jpg")]
+             extension (get-file-extension photo)
+             target-name (str date-time-as-string "-" md5-sum "." extension)]
          {:day-of-month day-of-month,
           :weekday weekday,
           :month month,
@@ -233,13 +264,18 @@
      "Options:" options ""]))
 
 
+(defn get-file-extension
+  [filename-string]
+  (str/lower-case (last (str/split filename-string #"\."))))
+
+
 (defn process-single-bad-file
   [target-path file]
   (let [source-path (.getAbsolutePath (io/as-file file))
         md5-sum (calculate-md5-substring-of-file file)
         file-name-with-extension (.getName (io/as-file file))
-        file-name-without-extension (first (str/split file-name-with-extension
-                                                      #"\."))
+        file-name-with-extension (.getName (io/as-file file))
+        [file-name-without-extension extension] (str/split file-name-with-extension #"\.")
         dest-path (str target-path
                        "/"
                        "NO_EXIF_DATA_FILES"
@@ -247,8 +283,9 @@
                        file-name-without-extension
                        "-"
                        md5-sum
-                       ".jpg")
-        _ (io/make-parents dest-path)] ; prepare directory tree for target
+                       "."
+                       extension)
+        _ (io/make-parents dest-path)]  ; prepare directory tree for target
     ;; file
     (warn
       "File" file-name-with-extension
@@ -283,17 +320,20 @@
                          (doall (map #(process-single-bad-file output-dir %)
                                      parsed-photos-without-exif))
                          (info "Couldn't parse" no-of-bad "files")))
-                     (exit 0 "Program finished.")
+                     ;; (exit 0 "Program finished.")
                      (catch Exception e
                        (timbre/errorf "Something went wrong: %s"
                                       (.getMessage ^Exception e))
-                       (exit 1 "Program finished."))))))
+                       ;; (exit 1 "Program finished.")
+                       )))))
 
 
 (comment
   (require '[eftest.runner :refer [find-tests run-tests]])
   (run-tests (find-tests "test"))
-  (-main "-i" "/input" "-o" "/output"))
+  (-main "-i" "/input" "-o" "/output")
+  (-main "-i" "/home/sa/su800/cpo_testing/input" "-o" "/home/sa/su800/cpo_testing/output")
+  )
 
 
 (def exif-directory-regex
@@ -326,10 +366,25 @@
   [filename]
   (kw-exif-for-file (FileInputStream. filename)))
 
-;; https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
-(def movie-formatter (DateTimeFormatter/ofPattern "E MMM d HH:mm:ss ZZZZZ u"))
 
 (comment
-  (-> (kw-exif-for-filename "/home/sa/zlom/MEDIA_RODZINNE/2024/video/IMG_0101.MOV")
+  (-> (kw-exif-for-filename "/home/sa/zlom/MEDIA_RODZINNE/2024/video/IMG_0060.MOV")
       (get "Creation Time")
-      (t/parse-date movie-formatter)))
+      (t/parse-date movie-formatter))
+
+  (-> (kw-exif-for-filename "/home/sa/su800/cpo_testing/input/20240411_090442.mp4")
+      (get "Creation Time")
+      (t/parse-date movie-formatter))
+
+  (-> (kw-exif-for-filename "/home/sa/su800/cpo_testing/input/IMG_0153.jpg")
+      (get "Date/Time")
+      (t/parse-date photo-formatter))
+
+  (read-exif-photo-date-taken "/home/sa/su800/cpo_testing/input/IMG_0153.jpg")
+  (read-exif-photo-date-taken "/home/sa/su800/cpo_testing/input/20240411_090442.mp4")
+  (read-exif-photo-date-taken "/home/sa/zlom/MEDIA_RODZINNE/2024/video/IMG_0060.MOV")
+  (has-exif-data? "/home/sa/su800/cpo_testing/input/7BF1ECBF-531F-45A3-BCBF-218DDC624459.MOV")
+  (make-photo-map "/home/sa/su800/cpo_testing/input/IMG_0153.jpg")
+  (make-photo-map "/home/sa/zlom/MEDIA_RODZINNE/2024/video/IMG_0060.MOV")
+  (make-photo-map "/home/sa/su800/cpo_testing/input/20240411_090442.mp4")
+)
