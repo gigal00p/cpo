@@ -19,6 +19,41 @@
     (java.time.format
       DateTimeFormatter)))
 
+(defn get-file-extension
+  [filename-string]
+  (str/lower-case (last (str/split filename-string #"\."))))
+
+
+(def exif-directory-regex
+  (re-pattern (str "(?i)(" (str/join "|"
+                                     ["Exif" "JPEG" "JFIF" "MP4"
+                                      "GPS"
+                                      "Agfa" "Canon" "Casio" "Epson"
+                                      "Fujifilm" "Kodak" "Kyocera"
+                                      "Leica" "Minolta" "Nikon" "Olympus"
+                                      "Panasonic" "Pentax" "QuickTime" "Sanyo"
+                                      "Sigma/Foveon" "Sony"]) ")")))
+
+
+(defn- extract-from-tag
+  [tag]
+  (into {} (map #(hash-map (.getTagName %) (.getDescription %)) tag)))
+
+
+(defn kw-exif-for-file
+  "Takes an image file (as a java.io.InputStream or java.io.File) and extracts exif information into a map"
+  [file]
+  (let [metadata (ImageMetadataReader/readMetadata file)
+        exif-directories (filter #(re-find exif-directory-regex (.getName %)) (.getDirectories metadata))
+        tags (map #(.getTags %) exif-directories)]
+    (into {} (map extract-from-tag tags))))
+
+
+(defn kw-exif-for-filename
+  "Loads a file from a give filename and extracts exif information into a map"
+  [filename]
+  (kw-exif-for-file (FileInputStream. filename)))
+
 
 (defn arg-assert
   [fn msg]
@@ -115,11 +150,6 @@
             files-without-exif (get all-files false)]
         {:files-with-exif files-with-exif,
          :files-without-exif files-without-exif}))))
-
-
-;; (defn make-date-object
-;;   [string-date]
-;;   (time/local-date-time "yyyy:MM:dd HH:mm:ss" string-date))
 
 
 (defn make-date-object
@@ -264,9 +294,6 @@
      "Options:" options ""]))
 
 
-(defn get-file-extension
-  [filename-string]
-  (str/lower-case (last (str/split filename-string #"\."))))
 
 
 (defn process-single-bad-file
@@ -328,46 +355,15 @@
                        )))))
 
 
+
+
 (comment
+
   (require '[eftest.runner :refer [find-tests run-tests]])
   (run-tests (find-tests "test"))
   (-main "-i" "/input" "-o" "/output")
   (-main "-i" "/home/sa/su800/cpo_testing/input" "-o" "/home/sa/su800/cpo_testing/output")
-  )
 
-
-(def exif-directory-regex
-  (re-pattern (str "(?i)(" (str/join "|"
-                                     ["Exif" "JPEG" "JFIF" "MP4"
-                                      "GPS"
-                                      "Agfa" "Canon" "Casio" "Epson"
-                                      "Fujifilm" "Kodak" "Kyocera"
-                                      "Leica" "Minolta" "Nikon" "Olympus"
-                                      "Panasonic" "Pentax" "QuickTime" "Sanyo"
-                                      "Sigma/Foveon" "Sony"]) ")")))
-
-
-(defn- extract-from-tag
-  [tag]
-  (into {} (map #(hash-map (.getTagName %) (.getDescription %)) tag)))
-
-
-(defn kw-exif-for-file
-  "Takes an image file (as a java.io.InputStream or java.io.File) and extracts exif information into a map"
-  [file]
-  (let [metadata (ImageMetadataReader/readMetadata file)
-        exif-directories (filter #(re-find exif-directory-regex (.getName %)) (.getDirectories metadata))
-        tags (map #(.getTags %) exif-directories)]
-    (into {} (map extract-from-tag tags))))
-
-
-(defn kw-exif-for-filename
-  "Loads a file from a give filename and extracts exif information into a map"
-  [filename]
-  (kw-exif-for-file (FileInputStream. filename)))
-
-
-(comment
   (-> (kw-exif-for-filename "/home/sa/zlom/MEDIA_RODZINNE/2024/video/IMG_0060.MOV")
       (get "Creation Time")
       (t/parse-date movie-formatter))
